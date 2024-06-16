@@ -30,6 +30,6 @@ app.get('/', (req, res) => {
 app.use(filterDeleted);
 app.use(config.API_VERSION_URL, router);
 
-app.listen(config.SERVER.PORT, () => {
+app.listen(config.SERVER.PORT, "0.0.0.0", () => {
   console.log(`Server listening on port ${config.SERVER.PORT}`);
 });
