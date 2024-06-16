@@ -24,6 +24,7 @@
   "scripts": {
     "start": "npm run start:prod",
     "watch:dev": "npm-run-all build:dev serve:dev",
+    "migrate:deploy": "prisma migrate deploy",
     "start:dev": "nodemon",
     "start:prod": "npm-run-all build serve:prod",
     "serve:prod": "node ./build/bundle.js",
