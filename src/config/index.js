@@ -6,7 +6,7 @@ export const config = {
 	API_VERSION_URL: '/api/v1',
 
 	SERVER: {
-		PORT: process.env.PORT || 5050,
+		PORT: process.env.PORT || 3000,
 		ORIGINS: process.env.ORIGINS.split(','),
 	},
 	TOKEN: {
