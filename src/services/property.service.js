@@ -1,5 +1,5 @@
 import { BOOKING_STATUS } from '@/constants/status.constant';
-import { PrismaClient } from '@prisma/client';
+import { BookingStatus, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -77,20 +77,34 @@ export const findById = async (id) => {
       bookings: {
         where: {
           OR: [
-            { bookingStatus: BOOKING_STATUS.CONFIRMED },
-            { bookingStatus: BOOKING_STATUS.AWAITING_OWNER_APPROVAL },
+            { bookingStatus: BookingStatus.CONFIRMED },
+            { bookingStatus: BookingStatus.COMPLETED },
+            { bookingStatus: BookingStatus.AWAITING_OWNER_APPROVAL },
             {
-              bookingStatus: BOOKING_STATUS.PENDING,
+              bookingStatus: BookingStatus.PENDING,
               // createdAt: {
               //   gte: new Date(Date.now() - 3 * 60 * 1000),
               // },
             },
           ],
         },
+        // select: {
+        //   bookingStatus: true,
+        //   review: true,
+        // },
       },
-      reviews: true,
+      // bookings: {
+      //   select: {
+      //     id: true,
+      //     email: true,
+      //     firstName: true,
+      //     lastName: true,
+      //     phone: true,
+      //     avatar: true,
+      //   },
+      // },
       propertyImages: true,
-
+      reviews: true,
       owner: {
         select: {
           id: true,
@@ -117,7 +131,7 @@ export const findById = async (id) => {
       },
     },
   });
-  console.log(propertyWithTags);
+
   const propertyTagsWithNames = propertyWithTags.propertyTags.map(
     (propertyTag) => propertyTag.tag.tagName
   );
@@ -134,7 +148,6 @@ export const findById = async (id) => {
 
 // get all propertie
 export const findMany = async (filters) => {
-  console.log(filters);
   const { city, search, propertyTags, page = 1, limit = 8 } = filters;
 
   // Convert page and limit to numbers
@@ -202,25 +215,49 @@ export const findMany = async (filters) => {
   };
 };
 
-export const findManyById = async (id) => {
-  return await prisma.property.findMany({
-    where: { ownerId: id },
-    include: {
-      propertyImages: true,
-      propertyTags: {
-        select: {
-          tag: {
-            select: {
-              tagName: true,
+export const findManyById = async (id, filter) => {
+  try {
+    let { page, limit } = filter;
+    page = Number(page);
+    limit = Number(limit);
+    const skip = (page - 1) * limit;
+
+    const totalCount = await prisma.property.count({
+      where: { ownerId: id },
+    });
+
+    const properties = await prisma.property.findMany({
+      where: { ownerId: id },
+      include: {
+        propertyImages: true,
+        propertyTags: {
+          select: {
+            tag: {
+              select: {
+                tagName: true,
+              },
             },
           },
         },
       },
-    },
-    orderBy: {
-      updatedAt: 'desc',
-    },
-  });
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      skip,
+      take: limit,
+    });
+    return {
+      properties,
+      pagination: {
+        totalCount,
+        page,
+        limit,
+      },
+    };
+  } catch (error) {
+    console.error('Error getting properties:', error);
+    throw new Error('Failed to get properties');
+  }
 };
 
 export const update = async (id, reqObj) => {

@@ -6,7 +6,7 @@ export const config = {
 	API_VERSION_URL: '/api/v1',
 
 	SERVER: {
-		PORT: process.env.PORT || 3000,
+		PORT: process.env.SERVER_PORT || 5050,
 		ORIGINS: process.env.ORIGINS.split(','),
 	},
 	TOKEN: {
@@ -23,4 +23,12 @@ export const config = {
 		KEY_ID: process.env.RAZORPAY_KEY_ID,
 		KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
 	},
+	EMAIL: {
+		EMAIL_HOST: process.env.EMAIL_HOST,
+		EMAIL_PORT: process.env.EMAIL_PORT,
+		EMAIL_USERNAME: process.env.EMAIL_USER,
+		EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
+		FROM_EMAIL: process.env.FROM_EMAIL,
+	}
 };
+

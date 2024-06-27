@@ -1,4 +1,4 @@
-import { BookingService } from '@/services';
+import { BookingService, EmailService } from '@/services';
 import { BookingStatus, PaymentStatus, Roles } from '@prisma/client';
 
 export const createBooking = async (req, res) => {
@@ -10,8 +10,9 @@ export const createBooking = async (req, res) => {
       userId,
       propertyId
     );
+    console.log('Email Send Owner and Cus New booking');
 
-    console.log(booking);
+    // console.log(booking);
     res
       .status(201)
       .json({ success: true, status: 201, data: booking, message: 'success' });
@@ -90,6 +91,9 @@ export const getBookingById = async (req, res) => {
   try {
     const { id } = req.params;
     const booking = await BookingService.getBookingById(id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
     res.json(booking);
   } catch (error) {
     console.error('Error getting booking:', error);
@@ -103,6 +107,7 @@ export const updateBookingStatus = async (req, res) => {
     const { bookingStatus, role } = req.body;
 
     const currentBooking = await BookingService.getBookingById(id);
+    // console.log("currentBooking",currentBooking);
 
     if (currentBooking.bookingStatus === BookingStatus.CANCELLED) {
       return res.status(400).json({
@@ -114,7 +119,7 @@ export const updateBookingStatus = async (req, res) => {
 
     // Owner operations
     if (role === Roles.OWNER) {
-      console.log(bookingStatus, role);
+      // console.log(bookingStatus, role);
       if (
         currentBooking.bookingStatus === BookingStatus.AWAITING_OWNER_APPROVAL
       ) {
@@ -124,6 +129,8 @@ export const updateBookingStatus = async (req, res) => {
             bookingStatus,
             PaymentStatus.SUCCESS
           );
+          await EmailService.sendEmailToCusAfterAcceptBooking(updatedBooking);
+          console.log('Email Send Owner accept your booking');
           return res.status(200).json({
             message: 'Booking confirmed successfully',
             status: 200,
@@ -136,6 +143,8 @@ export const updateBookingStatus = async (req, res) => {
             bookingStatus,
             PaymentStatus.REFUNDED
           );
+          console.log('Email Send Owner Reject your booking');
+          await EmailService.sendEmailToCusAfterRejetBooking(updatedBooking);
           return res.status(200).json({
             message: 'Booking canceled successfully',
             status: 200,
@@ -167,6 +176,7 @@ export const updateBookingStatus = async (req, res) => {
           bookingStatus,
           PaymentStatus.REFUNDED
         );
+        await EmailService.sendEmailToOwnerAfterCancelBooking(updatedBooking);
         return res.status(200).json({
           message: 'Booking canceled successfully',
           status: 200,
